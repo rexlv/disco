@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// Vector list
-type Vector struct {
+// Queue list
+type Queue struct {
 	elements []interface{}
 	size     int
 }
@@ -15,16 +15,16 @@ const (
 	initSize = 32
 )
 
-// NewVector returns new Vector
-func NewVector() *Vector {
-	return &Vector{
+// NewQueue returns new Queue
+func NewQueue() *Queue {
+	return &Queue{
 		size:     0,
 		elements: make([]interface{}, initSize),
 	}
 }
 
-// Add add elems
-func (l *Vector) Add(elems ...interface{}) {
+// Put add elems
+func (l *Queue) Put(elems ...interface{}) {
 	l.adjust(len(elems))
 
 	for _, elem := range elems {
@@ -33,8 +33,18 @@ func (l *Vector) Add(elems ...interface{}) {
 	}
 }
 
+func (l *Queue) Pop() (ret interface{}) {
+	if l.size <= 0 {
+		return nil
+	}
+
+	ret = l.elements[l.size-1]
+	l.elements = l.elements[:l.size-1]
+	return
+}
+
 // Get returns indexed element
-func (l *Vector) Get(index int) (interface{}, bool) {
+func (l *Queue) Get(index int) (interface{}, bool) {
 	if index >= l.size {
 		return nil, false
 	}
@@ -42,22 +52,22 @@ func (l *Vector) Get(index int) (interface{}, bool) {
 }
 
 // Empty returns wether list is empty
-func (l *Vector) Empty() bool {
+func (l *Queue) Empty() bool {
 	return 0 == l.size
 }
 
 // Size returns list's size
-func (l *Vector) Size() int {
+func (l *Queue) Size() int {
 	return l.size
 }
 
 // Clear clear all elements
-func (l *Vector) Clear() {
+func (l *Queue) Clear() {
 	l.size = 0
 	l.elements = []interface{}{}
 }
 
-func (l *Vector) String() string {
+func (l *Queue) String() string {
 	vals := make([]string, l.size)
 	for i, val := range l.elements[:l.size] {
 		vals[i] = fmt.Sprintf("%#v", val)
@@ -66,19 +76,19 @@ func (l *Vector) String() string {
 }
 
 // Values returns all elements
-func (l *Vector) Values() (vals []interface{}) {
+func (l *Queue) Values() (vals []interface{}) {
 	vals = make([]interface{}, l.size, l.size)
 	copy(vals, l.elements[:l.size])
 	return vals
 }
 
-func (l *Vector) resize(n int) {
+func (l *Queue) resize(n int) {
 	news := make([]interface{}, n, n)
 	copy(news, l.elements)
 	l.elements = news
 }
 
-func (l *Vector) adjust(n int) {
+func (l *Queue) adjust(n int) {
 	c := cap(l.elements)
 
 	for l.size+n >= c {
@@ -88,8 +98,10 @@ func (l *Vector) adjust(n int) {
 	l.resize(c)
 }
 
+/************************************************************************************************************/
+
 // Iterator iterator
-func (l *Vector) Iterator() func() (int, interface{}) {
+func (l *Queue) Iterator() func() (int, interface{}) {
 	var cursor int
 	return func() (index int, val interface{}) {
 		if cursor >= l.size {
@@ -104,7 +116,7 @@ func (l *Vector) Iterator() func() (int, interface{}) {
 }
 
 // Each impletements Enum interface
-func (l *Vector) Each(f func(index int, val interface{})) {
+func (l *Queue) Each(f func(index int, val interface{})) {
 	iter := l.Iterator()
 	for i, v := iter(); v != nil; {
 		f(i, v)
@@ -112,7 +124,7 @@ func (l *Vector) Each(f func(index int, val interface{})) {
 }
 
 // Map impletements Enum interface
-func (l *Vector) Map(f func(index int, val interface{}) interface{}) (m []interface{}) {
+func (l *Queue) Map(f func(index int, val interface{}) interface{}) (m []interface{}) {
 	iter := l.Iterator()
 	m = make([]interface{}, l.size, cap(l.elements))
 	for i, v := iter(); v != nil; {
@@ -123,7 +135,7 @@ func (l *Vector) Map(f func(index int, val interface{}) interface{}) (m []interf
 }
 
 // Any impletements Enum interface
-func (l *Vector) Any(f func(index int, val interface{}) bool) bool {
+func (l *Queue) Any(f func(index int, val interface{}) bool) bool {
 	iter := l.Iterator()
 	for i, v := iter(); v != nil; {
 		if f(i, v) {
@@ -134,7 +146,7 @@ func (l *Vector) Any(f func(index int, val interface{}) bool) bool {
 }
 
 // All impletements Enum interface
-func (l *Vector) All(f func(index int, val interface{}) bool) bool {
+func (l *Queue) All(f func(index int, val interface{}) bool) bool {
 	iter := l.Iterator()
 	for i, v := iter(); v != nil; {
 		if !f(i, v) {
@@ -145,7 +157,7 @@ func (l *Vector) All(f func(index int, val interface{}) bool) bool {
 }
 
 // Filter impletement Enum interface
-func (l *Vector) Filter(f func(index int, val interface{}) bool) (m []interface{}) {
+func (l *Queue) Filter(f func(index int, val interface{}) bool) (m []interface{}) {
 	iter := l.Iterator()
 	m = make([]interface{}, 0, cap(l.elements))
 	for i, v := iter(); v != nil; {
